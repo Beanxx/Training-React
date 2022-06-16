@@ -1,21 +1,25 @@
-import React, { useState, useRef } from "react";
+import React, { useRef } from "react";
 import { useEffect } from "react";
 
-function App() {
-  const [count, setCount] = useState(1);
-  const renderCount = useRef(1);
+const App = () => {
+  const inputRef = useRef();
 
   useEffect(() => {
-    renderCount.current += 1;
-    console.log("렌더링 수: ", renderCount.current);
-  });
+    // console.log(inputRef);
+    inputRef.current.focus(); // input 박스에 포커스
+  }, []); // 처음 렌더링시에만 실행
+
+  const login = () => {
+    alert(`환영합니다 ${inputRef.current.value}!`);
+    inputRef.current.focus();
+  };
 
   return (
     <div>
-      <p>Count: {count}</p>
-      <button onClick={() => setCount(count + 1)}>올려</button>
+      <input ref={inputRef} type="text" placeholder="username" />
+      <button onClick={login}>로그인</button>
     </div>
   );
-}
+};
 
 export default App;
