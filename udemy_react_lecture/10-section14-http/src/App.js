@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import MoviesList from "./components/MoviesList";
+import AddMovie from "./components/AddMovie";
 import "./App.css";
 
 function App() {
@@ -7,11 +8,13 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  async function fetchMoviesHandler() {
+  const fetchMoviesHandler = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("https://swapi.dev/api/films/");
+      const response = await fetch(
+        "https://react-http-practice-d5fb8-default-rtdb.firebaseio.com/movies.json"
+      );
 
       // axios에선 오류를 내지만 fetch에선 따로 오류를 잡아내지 않음 => so, 오류를 새롭게 생성해줘서 에러 처리해주기
       // 파싱 전에 요렇게 에러 처리해줘야 함!
@@ -20,21 +23,40 @@ function App() {
       }
 
       const data = await response.json();
-
-      const transformedMovies = data.results.map((movieData) => {
-        return {
-          // api movieData.~로 받아온 이름을 id, title, openingText ..로 이름을 변환해서 저장해놈
-          id: movieData.episode_id,
-          title: movieData.title,
-          openingText: movieData.opening_crawl,
-          releaseDate: movieData.release_date,
-        };
-      });
-      setMovies(transformedMovies);
+      // 중첩된 객체이므로 데이터를 아래와 같이 배열 내 객체 형태로 바꿔주기
+      const loadedMovies = [];
+      for (const key in data) {
+        loadedMovies.push({
+          id: key,
+          title: data[key].title,
+          openingText: data[key].openingText,
+          releaseDate: data[key].releaseDate,
+        });
+      }
+      setMovies(loadedMovies);
     } catch (error) {
       setError(error.message);
     }
     setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchMoviesHandler();
+  }, [fetchMoviesHandler]);
+
+  async function addMovieHandler(movie) {
+    const response = await fetch(
+      "https://react-http-practice-d5fb8-default-rtdb.firebaseio.com/movies.json",
+      {
+        method: "POST",
+        body: JSON.stringify(movie), // js의 객체나 배열 -> json 형식으로 바꿔줌
+        headers: {
+          "Content-type": "application/json",
+        },
+      }
+    );
+    const data = await response.json();
+    console.log(data);
   }
 
   let content = <p>Found no movies.</p>;
@@ -45,6 +67,9 @@ function App() {
 
   return (
     <React.Fragment>
+      <section>
+        <AddMovie onAddMovie={addMovieHandler} />
+      </section>
       <section>
         <button onClick={fetchMoviesHandler}>Fetch Movies</button>
       </section>
